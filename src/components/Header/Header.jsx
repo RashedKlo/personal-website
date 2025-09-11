@@ -6,7 +6,7 @@ import PageTransition from '../Animation/PageTransition';
 
 // Navigation links data
 const navigationLinks = [
-    { name: "Home", path: "/home" },
+    { name: "Home", path: "/" },
     { name: "Resume", path: "/resume" },
     { name: "Services", path: "/services" },
     { name: "Portfolio", path: "/work" },
