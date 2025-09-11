@@ -11,7 +11,7 @@ const HomePage = React.lazy(() => import("./Web/HomePage"));
 export default function App() {
     return <Routes>
         <Route element={<Header />}>
-            <Route path="/home" element={<HomePage />} />
+            <Route path="/" element={<HomePage />} />
             <Route path="/services" element={<ServicesPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/resume" element={<ResumePage />} />
