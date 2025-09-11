@@ -12,7 +12,7 @@
     "preview": "vite preview"
       
   },
-    "homepage": "https://Rashed-Klo.github.io/Personal-website/",
+    "homepage": "https://rashedklo.github.io/Personal-website/",
   "dependencies": {
     "@tailwindcss/vite": "^4.1.12",
     "framer-motion": "^12.23.12",
