@@ -1,1 +1,12 @@
 @import "tailwindcss";
+.loading-spinner {
+  will-change: transform;
+}
+
+.loading-fade {
+  will-change: opacity;
+}
+
+.loading-scale {
+  will-change: transform;
+}

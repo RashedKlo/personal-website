@@ -6,8 +6,8 @@ import { BrowserRouter as Router } from 'react-router-dom'
 const basename = import.meta.env.DEV ? "/" : "/personal-website";
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <Router basename={basename}>
+    <Router >
       <App />
     </Router>
-  </StrictMode>,
+  </StrictMode>
 )

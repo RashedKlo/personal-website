@@ -109,7 +109,7 @@ const TabContent = memo(({ activeTab, ANIMATION_VARIANTS }) => {
     ], []);
 
     const aboutData = useMemo(() => [
-        { icon: FaCalendar, field: "Age", value: "25 years", color: "text-blue-400" },
+        { icon: FaCalendar, field: "Age", value: "21 years", color: "text-blue-400" },
         { icon: FaMapMarker, field: "Location", value: "Aleppo, Syria", color: "text-green-400" },
         { icon: FaEnvelope, field: "Email", value: "rashed.klo.dev@gmail.com", color: "text-purple-400" },
         { icon: FaPhone, field: "Phone", value: "+963 947 841 958", color: "text-orange-400" },

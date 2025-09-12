@@ -1,5 +1,6 @@
 import { memo, useMemo } from "react";
 import { motion } from 'framer-motion'
+
 const EducationCard = memo(({ item, index, ANIMATION_VARIANTS }) => {
     const animationProps = useMemo(() => ({
         variants: ANIMATION_VARIANTS.card,
@@ -15,14 +16,14 @@ const EducationCard = memo(({ item, index, ANIMATION_VARIANTS }) => {
         >
             <div className="absolute inset-0 bg-gradient-to-r from-purple-600/5 to-pink-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="relative z-10">
-                <div className="flex justify-between items-start mb-4">
-                    <div>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
+                    <div className="flex-1 min-w-0">
                         <h3 className="text-white text-xl font-bold mb-1 group-hover:text-purple-300 transition-colors">
                             {item.degree}
                         </h3>
                         <p className="text-purple-400 font-medium">{item.institution}</p>
                     </div>
-                    <span className="px-3 py-1 bg-cyan-500/20 text-cyan-300 text-sm font-medium rounded-full border border-cyan-500/30 ">
+                    <span className="px-3 py-1 bg-cyan-500/20 text-cyan-300 text-sm font-medium rounded-full border border-cyan-500/30 shrink-0 self-start">
                         {item.duration}
                     </span>
                 </div>
@@ -31,4 +32,5 @@ const EducationCard = memo(({ item, index, ANIMATION_VARIANTS }) => {
         </motion.div>
     );
 });
+
 export default EducationCard;

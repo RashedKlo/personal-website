@@ -1,142 +1,88 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMenu, FiX, FiArrowUpRight } from 'react-icons/fi';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import PageTransition from '../Animation/PageTransition';
 
-// Navigation links data
-const navigationLinks = [
+// Constants - moved outside component to prevent recreation
+const NAVIGATION_LINKS = [
     { name: "Home", path: "/" },
     { name: "Resume", path: "/resume" },
     { name: "Services", path: "/services" },
     { name: "Portfolio", path: "/work" },
     { name: "Contact", path: "/contact" }
 ];
-const fadeInUp = {
-    initial: { opacity: 0, y: 30 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -30 }
-};
-// Animation variants
-const headerVariants = {
-    initial: { y: -100, opacity: 0 },
-    animate: {
-        y: 0,
-        opacity: 1,
-        transition: {
-            duration: 0.8,
-            ease: "easeOut",
-            staggerChildren: 0.1
-        }
-    }
-};
 
-const logoVariants = {
-    initial: { opacity: 0, x: -30 },
-    animate: {
-        opacity: 1,
-        x: 0,
-        transition: { duration: 0.6, ease: "easeOut" }
-    }
-};
-
-const navItemVariants = {
-    initial: { opacity: 0, y: -20 },
-    animate: {
-        opacity: 1,
-        y: 0,
-        transition: { duration: 0.5, ease: "easeOut" }
-    }
-};
-
-const mobileMenuVariants = {
-    initial: {
-        opacity: 0,
-        scale: 0.95,
-        y: -20
-    },
-    animate: {
-        opacity: 1,
-        scale: 1,
-        y: 0,
-        transition: {
-            duration: 0.3,
-            ease: "easeOut",
-            staggerChildren: 0.05
-        }
-    },
-    exit: {
-        opacity: 0,
-        scale: 0.95,
-        y: -20,
-        transition: {
-            duration: 0.2,
-            ease: "easeIn"
-        }
-    }
-};
-
-// Stair Transition Component
-const StairTransition = ({ isVisible }) => {
-    const stairVariants = {
-        initial: { scaleY: 1 },
+// Animation variants - memoized to prevent recreation
+const ANIMATION_VARIANTS = {
+    header: {
+        initial: { y: -100, opacity: 0 },
         animate: {
-            scaleY: 0,
+            y: 0,
+            opacity: 1,
             transition: {
-                duration: 0.6,
-                ease: "easeInOut"
+                duration: 0.8,
+                ease: "easeOut",
+                staggerChildren: 0.1
             }
         }
-    };
-
-    return (
-        <AnimatePresence>
-            {isVisible && (
-                <div className="fixed inset-0 z-50 pointer-events-none flex">
-                    {[...Array(8)].map((_, i) => (
-                        <motion.div
-                            key={i}
-                            className="flex-1 bg-gradient-to-b from-blue-500 to-indigo-600"
-                            style={{ transformOrigin: 'bottom' }}
-                            variants={stairVariants}
-                            initial="initial"
-                            animate="animate"
-                            transition={{
-                                delay: i * 0.08,
-                                duration: 0.6,
-                                ease: "easeInOut"
-                            }}
-                        />
-                    ))}
-                </div>
-            )}
-        </AnimatePresence>
-    );
+    },
+    logo: {
+        initial: { opacity: 0, x: -30 },
+        animate: {
+            opacity: 1,
+            x: 0,
+            transition: { duration: 0.6, ease: "easeOut" }
+        }
+    },
+    navItem: {
+        initial: { opacity: 0, y: -20 },
+        animate: {
+            opacity: 1,
+            y: 0,
+            transition: { duration: 0.5, ease: "easeOut" }
+        }
+    },
+    mobileMenu: {
+        initial: { opacity: 0, scale: 0.95, y: -20 },
+        animate: {
+            opacity: 1,
+            scale: 1,
+            y: 0,
+            transition: {
+                duration: 0.3,
+                ease: "easeOut",
+                staggerChildren: 0.05
+            }
+        },
+        exit: {
+            opacity: 0,
+            scale: 0.95,
+            y: -20,
+            transition: { duration: 0.2, ease: "easeIn" }
+        }
+    }
 };
 
+// Memoized components to prevent unnecessary re-renders
+const ModernNavLink = React.memo(({ link, isActive, onClick, index }) => {
+    const handleClick = useCallback(() => onClick(link.path), [onClick, link.path]);
 
-
-
-
-
-
-// Modern Desktop Navigation Link
-const ModernNavLink = ({ link, isActive, onClick, index }) => {
     return (
         <motion.div
             className="relative group"
-            variants={navItemVariants}
+            variants={ANIMATION_VARIANTS.navItem}
             custom={index}
         >
             <motion.button
-                onClick={() => onClick(link.path)}
+                onClick={handleClick}
                 className={`
-          relative px-6 py-3 text-sm font-medium transition-all duration-500 rounded-full overflow-hidden
-          ${isActive
+                    relative px-6 py-3 text-sm font-medium transition-all duration-500 rounded-full overflow-hidden
+                    ${isActive
                         ? 'text-white bg-gradient-to-r from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/30'
                         : 'text-slate-300 hover:text-white'
                     }
-        `}
+                `}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 layout
@@ -152,7 +98,6 @@ const ModernNavLink = ({ link, isActive, onClick, index }) => {
                     )}
                 </span>
 
-                {/* Hover background for inactive links */}
                 {!isActive && (
                     <motion.div
                         className="absolute inset-0 bg-slate-800/60 backdrop-blur-sm rounded-full"
@@ -161,31 +106,14 @@ const ModernNavLink = ({ link, isActive, onClick, index }) => {
                         transition={{ duration: 0.3, ease: "easeOut" }}
                     />
                 )}
-
-                {/* Active background glow */}
-                {isActive && (
-                    <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-indigo-500/20 rounded-full blur-xl"
-                        animate={{
-                            scale: [1, 1.2, 1],
-                            opacity: [0.5, 0.8, 0.5]
-                        }}
-                        transition={{
-                            duration: 3,
-                            repeat: Infinity,
-                            ease: "easeInOut"
-                        }}
-                    />
-                )}
             </motion.button>
         </motion.div>
     );
-};
+});
 
-// Premium CTA Button
-const PremiumCTAButton = ({ onClick }) => (
+const PremiumCTAButton = React.memo(({ onClick }) => (
     <motion.div
-        variants={navItemVariants}
+        variants={ANIMATION_VARIANTS.navItem}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
     >
@@ -195,53 +123,31 @@ const PremiumCTAButton = ({ onClick }) => (
         >
             <span className="relative z-10 flex items-center gap-2">
                 Let's Talk
-                <motion.div
-                    animate={{ x: [0, 3, 0] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                >
-                    <FiArrowUpRight size={14} />
-                </motion.div>
+                <FiArrowUpRight size={14} />
             </span>
 
-            {/* Animated gradient overlay */}
             <motion.div
                 className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
                 initial={{ x: "-100%" }}
                 whileHover={{ x: "100%" }}
                 transition={{ duration: 0.6 }}
             />
-
-            {/* Glow effect */}
-            <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-blue-400/30 to-purple-500/30 rounded-full blur-xl"
-                animate={{
-                    scale: [1, 1.1, 1],
-                    opacity: [0.5, 0.8, 0.5]
-                }}
-                transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                }}
-            />
         </motion.button>
     </motion.div>
-);
+));
 
-// Enhanced Desktop Navigation
-const EnhancedDesktopNavigation = ({ activeLink, onLinkClick, onCTAClick }) => (
+const EnhancedDesktopNavigation = React.memo(({ activeLink, onLinkClick, onCTAClick }) => (
     <motion.div
         className="hidden lg:flex items-center"
-        variants={headerVariants}
+        variants={ANIMATION_VARIANTS.header}
     >
-        {/* Navigation Container with Glass Effect */}
         <motion.nav
             className="flex items-center gap-2 px-4 py-2 bg-slate-900/40 backdrop-blur-xl rounded-full border border-slate-700/30 shadow-2xl shadow-slate-900/20"
             initial={{ opacity: 0, scale: 0.9, y: -20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
         >
-            {navigationLinks.map((link, index) => (
+            {NAVIGATION_LINKS.map((link, index) => (
                 <ModernNavLink
                     key={link.name}
                     link={link}
@@ -252,7 +158,6 @@ const EnhancedDesktopNavigation = ({ activeLink, onLinkClick, onCTAClick }) => (
             ))}
         </motion.nav>
 
-        {/* CTA Button with spacing */}
         <motion.div
             className="ml-6"
             initial={{ opacity: 0, x: 20 }}
@@ -262,16 +167,15 @@ const EnhancedDesktopNavigation = ({ activeLink, onLinkClick, onCTAClick }) => (
             <PremiumCTAButton onClick={onCTAClick} />
         </motion.div>
     </motion.div>
-);
+));
 
-// Mobile Toggle Button
-const MobileToggle = ({ isOpen, onToggle }) => (
+const MobileToggle = React.memo(({ isOpen, onToggle }) => (
     <motion.button
         onClick={onToggle}
         className="lg:hidden w-12 h-12 rounded-xl bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 flex items-center justify-center text-slate-300 hover:text-blue-400 hover:border-blue-500/30 transition-all duration-300 shadow-lg"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        variants={navItemVariants}
+        variants={ANIMATION_VARIANTS.navItem}
     >
         <motion.div
             animate={{ rotate: isOpen ? 180 : 0 }}
@@ -280,14 +184,12 @@ const MobileToggle = ({ isOpen, onToggle }) => (
             {isOpen ? <FiX size={20} /> : <FiMenu size={20} />}
         </motion.div>
     </motion.button>
-);
+));
 
-// Mobile Navigation Menu
-const MobileNavigation = ({ isOpen, activeLink, onLinkClick, onCTAClick, onClose }) => (
+const MobileNavigation = React.memo(({ isOpen, activeLink, onLinkClick, onCTAClick, onClose }) => (
     <AnimatePresence>
         {isOpen && (
             <>
-                {/* Backdrop */}
                 <motion.div
                     className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-40 lg:hidden"
                     initial={{ opacity: 0 }}
@@ -296,56 +198,30 @@ const MobileNavigation = ({ isOpen, activeLink, onLinkClick, onCTAClick, onClose
                     onClick={onClose}
                 />
 
-                {/* Mobile Menu */}
                 <motion.div
                     className="fixed top-24 right-4 left-4 bg-slate-900/95 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-2xl z-50 lg:hidden overflow-hidden"
-                    variants={mobileMenuVariants}
+                    variants={ANIMATION_VARIANTS.mobileMenu}
                     initial="initial"
                     animate="animate"
                     exit="exit"
                 >
                     <div className="p-6">
-                        {/* Navigation Links */}
                         <nav className="space-y-2">
-                            {navigationLinks.map((link, index) => (
-                                <motion.div
+                            {NAVIGATION_LINKS.map((link, index) => (
+                                <MobileNavItem
                                     key={link.name}
-                                    variants={navItemVariants}
-                                    custom={index}
-                                >
-                                    <motion.button
-                                        onClick={() => {
-                                            onLinkClick(link.path);
-                                            onClose();
-                                        }}
-                                        className={`
-                      w-full text-left px-6 py-4 rounded-xl text-base font-medium transition-all duration-300 flex items-center justify-between group
-                      ${activeLink === link.path
-                                                ? 'bg-gradient-to-r from-blue-500/20 to-indigo-600/20 text-blue-400 border border-blue-500/30'
-                                                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-                                            }
-                    `}
-                                        whileHover={{ x: 6 }}
-                                        whileTap={{ scale: 0.98 }}
-                                    >
-                                        <span>{link.name}</span>
-                                        {activeLink === link.path && (
-                                            <motion.div
-                                                className="w-2 h-2 bg-blue-400 rounded-full"
-                                                initial={{ scale: 0 }}
-                                                animate={{ scale: 1 }}
-                                                transition={{ duration: 0.2, delay: 0.1 }}
-                                            />
-                                        )}
-                                    </motion.button>
-                                </motion.div>
+                                    link={link}
+                                    isActive={activeLink === link.path}
+                                    onClick={onLinkClick}
+                                    onClose={onClose}
+                                    index={index}
+                                />
                             ))}
                         </nav>
 
-                        {/* CTA Button */}
                         <motion.div
                             className="mt-8 pt-6 border-t border-slate-700/50"
-                            variants={navItemVariants}
+                            variants={ANIMATION_VARIANTS.navItem}
                         >
                             <motion.button
                                 onClick={() => {
@@ -357,12 +233,7 @@ const MobileNavigation = ({ isOpen, activeLink, onLinkClick, onCTAClick, onClose
                                 whileTap={{ scale: 0.98 }}
                             >
                                 Let's Talk
-                                <motion.div
-                                    animate={{ x: [0, 3, 0] }}
-                                    transition={{ duration: 1.5, repeat: Infinity }}
-                                >
-                                    <FiArrowUpRight size={16} />
-                                </motion.div>
+                                <FiArrowUpRight size={16} />
                             </motion.button>
                         </motion.div>
                     </div>
@@ -370,86 +241,144 @@ const MobileNavigation = ({ isOpen, activeLink, onLinkClick, onCTAClick, onClose
             </>
         )}
     </AnimatePresence>
-);
+));
+
+const MobileNavItem = React.memo(({ link, isActive, onClick, onClose, index }) => {
+    const handleClick = useCallback(() => {
+        onClick(link.path);
+        onClose();
+    }, [onClick, onClose, link.path]);
+
+    return (
+        <motion.div
+            variants={ANIMATION_VARIANTS.navItem}
+            custom={index}
+        >
+            <motion.button
+                onClick={handleClick}
+                className={`
+                    w-full text-left px-6 py-4 rounded-xl text-base font-medium transition-all duration-300 flex items-center justify-between group
+                    ${isActive
+                        ? 'bg-gradient-to-r from-blue-500/20 to-indigo-600/20 text-blue-400 border border-blue-500/30'
+                        : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                    }
+                `}
+                whileHover={{ x: 6 }}
+                whileTap={{ scale: 0.98 }}
+            >
+                <span>{link.name}</span>
+                {isActive && (
+                    <motion.div
+                        className="w-2 h-2 bg-blue-400 rounded-full"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ duration: 0.2, delay: 0.1 }}
+                    />
+                )}
+            </motion.button>
+        </motion.div>
+    );
+});
 
 // Main Header Component
 const Header = () => {
-    const [activeLink, setActiveLink] = useState('/home');
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    // Use location.pathname instead of state for active link
+    const activeLink = location.pathname;
+
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const [showPageTransition, setShowPageTransition] = useState(false);
 
-    // Handle scroll effect
+    // Optimized scroll handler with throttling
+    const handleScroll = useCallback(() => {
+        const scrolled = window.scrollY > 20;
+        if (scrolled !== isScrolled) {
+            setIsScrolled(scrolled);
+        }
+    }, [isScrolled]);
+
     useEffect(() => {
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > 20);
+        let timeoutId;
+        const throttledHandleScroll = () => {
+            if (timeoutId) return;
+            timeoutId = setTimeout(() => {
+                handleScroll();
+                timeoutId = null;
+            }, 16); // ~60fps
         };
 
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
-    const nav = useNavigate();
-    // Handle link navigation with page transition
-    const handleLinkClick = (path) => {
-        nav(path);
+        window.addEventListener('scroll', throttledHandleScroll, { passive: true });
+        return () => {
+            window.removeEventListener('scroll', throttledHandleScroll);
+            if (timeoutId) clearTimeout(timeoutId);
+        };
+    }, [handleScroll]);
 
+    // Memoized handlers to prevent child re-renders
+    const handleLinkClick = useCallback((path) => {
         if (path !== activeLink) {
             setShowPageTransition(true);
+            navigate(path);
 
-            // Simulate page transition
             const timer = setTimeout(() => {
-
-                setActiveLink(path);
                 setShowPageTransition(false);
             }, 1000);
 
             return () => clearTimeout(timer);
         }
-    };
+    }, [navigate, activeLink]);
 
-    // Handle CTA click
-    const handleCTAClick = () => {
+    const handleCTAClick = useCallback(() => {
         handleLinkClick('/contact');
-    };
+    }, [handleLinkClick]);
 
-    // Close mobile menu on escape
+    const closeMobileMenu = useCallback(() => {
+        setIsMobileMenuOpen(false);
+    }, []);
+
+    const toggleMobileMenu = useCallback(() => {
+        setIsMobileMenuOpen(prev => !prev);
+    }, []);
+
+    // Handle escape key
     useEffect(() => {
+        if (!isMobileMenuOpen) return;
+
         const handleEscape = (e) => {
             if (e.key === 'Escape') {
                 setIsMobileMenuOpen(false);
             }
         };
 
-        if (isMobileMenuOpen) {
-            document.addEventListener('keydown', handleEscape);
-        }
-
-        return () => {
-            document.removeEventListener('keydown', handleEscape);
-        };
+        document.addEventListener('keydown', handleEscape);
+        return () => document.removeEventListener('keydown', handleEscape);
     }, [isMobileMenuOpen]);
 
-    return (
+    // Memoized header classes
+    const headerClasses = useMemo(() => `
+        fixed top-0 left-0 right-0 z-30 transition-all duration-700
+        ${isScrolled
+            ? 'bg-slate-900/80 backdrop-blur-2xl border-b border-slate-700/30 shadow-xl shadow-slate-900/10'
+            : 'bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800'
+        }
+    `, [isScrolled]);
 
-        < div className='bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800'>
+    return (
+        <div className='bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800'>
             <motion.header
-                className={`
-            fixed top-0 left-0 right-0 z-30 transition-all duration-700
-            ${isScrolled
-                        ? 'bg-slate-900/80 backdrop-blur-2xl border-b border-slate-700/30 shadow-xl shadow-slate-900/10'
-                        : 'bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800'
-                    }
-          `}
-                variants={headerVariants}
+                className={headerClasses}
+                variants={ANIMATION_VARIANTS.header}
                 initial="initial"
                 animate="animate"
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-18 lg:h-22">
                         {/* Logo */}
-                        {/* Welcome Line */}
                         <motion.div
-                            variants={logoVariants}
+                            variants={ANIMATION_VARIANTS.logo}
                             initial="initial"
                             animate="animate"
                             transition={{ duration: 0.6, delay: 0.2 }}
@@ -469,7 +398,7 @@ const Header = () => {
                         {/* Mobile Toggle */}
                         <MobileToggle
                             isOpen={isMobileMenuOpen}
-                            onToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            onToggle={toggleMobileMenu}
                         />
                     </div>
                 </div>
@@ -481,15 +410,14 @@ const Header = () => {
                 activeLink={activeLink}
                 onLinkClick={handleLinkClick}
                 onCTAClick={handleCTAClick}
-                onClose={() => setIsMobileMenuOpen(false)}
+                onClose={closeMobileMenu}
             />
 
             {/* Spacer for fixed header */}
             <div className="h-18 lg:h-22" />
 
             <PageTransition isVisible={showPageTransition} />
-
-        </div >
+        </div>
     );
 };
 

@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 import React, { Suspense } from "react";
+import GlobalLoader from "./components/Loader/GlobalLoader";
 // import Header from "./components/Header/Header";
 const Header = React.lazy(() => import("./components/Header/Header"));
 const ServicesPage = React.lazy(() => import("./Web/ServicesPage"));
@@ -9,8 +10,9 @@ const ResumePage = React.lazy(() => import("./Web/ResumePage"));
 const HomePage = React.lazy(() => import("./Web/HomePage"));
 
 export default function App() {
-    return <Suspense fallback={<div>Loading...</div>}>
+    return <Suspense fallback={<GlobalLoader isVisible={true} message="Welcome to My Portfolio" />}>
         <Routes>
+
             <Route element={<Header />}>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/services" element={<ServicesPage />} />
@@ -19,5 +21,5 @@ export default function App() {
                 <Route path="/work" element={<WorkPage />} />
             </Route>
         </Routes>
-    </Suspense>
+    </Suspense >
 }

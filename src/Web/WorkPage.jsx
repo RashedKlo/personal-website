@@ -4,33 +4,16 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, EffectFade } from "swiper/modules";
 import "swiper/css";
 import { useLocation, useNavigate } from "react-router-dom";
-import {
-    BsGithub,
-    BsEye,
-    BsStar
-} from "react-icons/bs";
+import { BsGithub, BsEye, BsStar } from "react-icons/bs";
 
-// Optimized lazy loading with better loading states
+// Lazy load components with better splitting
 const BackgroundEffects = lazy(() => import("../features/Work/components/BackgroundEffects"));
 const TechStack = lazy(() => import("../features/Work/components/TechStack"));
 const ProjectNavigation = lazy(() => import("../features/Work/components/ProjectNavigation"));
 const OptimizedImage = lazy(() => import("../components/OptimizedImage"));
 const ActionButton = lazy(() => import("../features/Work/components/ActionButton"));
 
-// Loading fallback components
-const LoadingSpinner = () => (
-    <div className="flex items-center justify-center p-4">
-        <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-    </div>
-);
-
-const BackgroundFallback = () => (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800" />
-    </div>
-);
-
-// ==================== Constants ====================
+// Constants - moved outside to prevent recreation
 const PROJECTS_DATA = [
     {
         id: 1,
@@ -89,7 +72,24 @@ const PROJECTS_DATA = [
     }
 ];
 
-// Memoized animation variants to prevent recreation
+// Pre-calculated values
+const TOTAL_PROJECTS = PROJECTS_DATA.length;
+const PROJECTS_MAP = new Map(PROJECTS_DATA.map(p => [p.id, p]));
+
+// Optimized loading components
+const LoadingSpinner = React.memo(() => (
+    <div className="flex items-center justify-center p-4">
+        <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+    </div>
+));
+
+const BackgroundFallback = React.memo(() => (
+    <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800" />
+    </div>
+));
+
+// Memoized animation variants factory
 const createAnimationVariants = (prefersReducedMotion) => ({
     container: {
         hidden: { opacity: 0 },
@@ -102,10 +102,7 @@ const createAnimationVariants = (prefersReducedMotion) => ({
         },
     },
     item: {
-        hidden: {
-            opacity: 0,
-            y: prefersReducedMotion ? 0 : 30
-        },
+        hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 30 },
         visible: {
             opacity: 1,
             y: 0,
@@ -117,18 +114,83 @@ const createAnimationVariants = (prefersReducedMotion) => ({
     }
 });
 
+// Memoized project slide component
+const ProjectSlide = React.memo(({ project, prefersReducedMotion }) => (
+    <motion.div
+        className="relative w-full h-full group cursor-pointer"
+        whileHover={{ scale: prefersReducedMotion ? 1 : 1.02 }}
+        transition={{ duration: 0.4 }}
+    >
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+        {/* Featured Badge */}
+        {project.featured && (
+            <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="absolute top-3 sm:top-4 md:top-6 left-3 sm:left-4 md:left-6 z-20 flex items-center gap-1 md:gap-2 px-2 py-1 md:px-3 md:py-1.5 bg-gradient-to-r from-yellow-400/90 to-orange-500/90 text-white text-xs md:text-sm font-semibold rounded-full backdrop-blur-sm border border-white/20"
+            >
+                <BsStar className="text-xs" />
+                <span className="hidden xs:inline">Featured</span>
+            </motion.div>
+        )}
+
+        {/* Project Image */}
+        <Suspense fallback={
+            <div className="w-full h-full bg-slate-800 flex items-center justify-center">
+                <LoadingSpinner />
+            </div>
+        }>
+            <OptimizedImage
+                src={project.image}
+                alt={project.title}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                loading="lazy"
+            />
+        </Suspense>
+
+        {/* Hover Content */}
+        <div className="absolute bottom-3 sm:bottom-4 md:bottom-6 left-3 sm:left-4 md:left-6 right-3 sm:right-4 md:right-6 z-20 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
+            <h3 className="text-white font-bold text-base sm:text-lg md:text-xl mb-1 md:mb-2">{project.title}</h3>
+            <p className="text-slate-200 text-xs sm:text-sm line-clamp-2 leading-relaxed">
+                {project.description}
+            </p>
+        </div>
+    </motion.div>
+));
+
+// Memoized pagination dots
+const PaginationDots = React.memo(({ currentIndex, currentProject, onSlideClick, prefersReducedMotion }) => (
+    <div className="flex justify-center gap-2 sm:gap-3 mt-4 sm:mt-6 md:mt-8">
+        {PROJECTS_DATA.map((_, index) => (
+            <motion.button
+                key={index}
+                onClick={() => onSlideClick(index)}
+                whileHover={{ scale: prefersReducedMotion ? 1 : 1.2 }}
+                whileTap={{ scale: prefersReducedMotion ? 1 : 0.9 }}
+                className={`w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400/50 ${index === currentIndex
+                    ? `bg-gradient-to-r ${currentProject.color} shadow-lg shadow-blue-500/30`
+                    : 'bg-white/30 hover:bg-white/50'
+                    }`}
+                aria-label={`Go to project ${index + 1}`}
+            />
+        ))}
+    </div>
+));
+
+// Main WorkPage component
 const WorkPage = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const prefersReducedMotion = useReducedMotion();
 
-    // Get project ID from URL parameters with memoization
+    // Optimized URL parameter parsing
     const { projectIdFromUrl, initialProject } = useMemo(() => {
         const urlParams = new URLSearchParams(location.search);
         const projectIdFromUrl = urlParams.get('project');
-
         const initialProject = projectIdFromUrl
-            ? PROJECTS_DATA.find(p => p.id.toString() === projectIdFromUrl) || PROJECTS_DATA[0]
+            ? PROJECTS_MAP.get(parseInt(projectIdFromUrl)) || PROJECTS_DATA[0]
             : PROJECTS_DATA[0];
 
         return { projectIdFromUrl, initialProject };
@@ -141,7 +203,51 @@ const WorkPage = () => {
     // Memoized animation variants
     const variants = useMemo(() => createAnimationVariants(prefersReducedMotion), [prefersReducedMotion]);
 
-    // Effect to handle URL parameter changes and update swiper
+    // Optimized current index calculation
+    const currentIndex = useMemo(() =>
+        PROJECTS_DATA.findIndex(p => p.id === currentProject.id),
+        [currentProject.id]
+    );
+
+    // Memoized motion props
+    const motionProps = useMemo(() => ({
+        main: {
+            initial: { opacity: 0 },
+            animate: { opacity: 1 },
+            transition: { duration: prefersReducedMotion ? 0.2 : 0.8, ease: "easeOut" }
+        },
+        header: {
+            initial: { opacity: 0, y: prefersReducedMotion ? 0 : -30 },
+            animate: { opacity: 1, y: 0 },
+            transition: { duration: prefersReducedMotion ? 0.2 : 0.6, delay: prefersReducedMotion ? 0 : 0.2 }
+        },
+        slider: {
+            initial: { opacity: 0, scale: prefersReducedMotion ? 1 : 0.95 },
+            animate: { opacity: 1, scale: 1 },
+            transition: { duration: prefersReducedMotion ? 0.2 : 0.8, delay: prefersReducedMotion ? 0 : 0.4 }
+        }
+    }), [prefersReducedMotion]);
+
+    // Optimized handlers
+    const handleSlideChange = useCallback((swiper) => {
+        const currentIndex = swiper.activeIndex;
+        const newProject = PROJECTS_DATA[currentIndex];
+
+        setCurrentProject(newProject);
+        navigate(`/work?project=${newProject.id}`, { replace: true });
+
+        // Optimized loading state
+        setIsLoading(true);
+        requestAnimationFrame(() => {
+            setTimeout(() => setIsLoading(false), 50);
+        });
+    }, [navigate]);
+
+    const goToPrevSlide = useCallback(() => swiperRef?.slidePrev(), [swiperRef]);
+    const goToNextSlide = useCallback(() => swiperRef?.slideNext(), [swiperRef]);
+    const goToSlide = useCallback((index) => swiperRef?.slideTo(index), [swiperRef]);
+
+    // Effect for URL parameter changes
     useEffect(() => {
         if (projectIdFromUrl && swiperRef) {
             const projectIndex = PROJECTS_DATA.findIndex(p => p.id.toString() === projectIdFromUrl);
@@ -151,81 +257,16 @@ const WorkPage = () => {
         }
     }, [projectIdFromUrl, swiperRef]);
 
-    // Effect to update URL when project changes - optimized with comparison
-    useEffect(() => {
-        const currentParams = new URLSearchParams(location.search);
-        const currentProjectId = currentParams.get('project');
-
-        if (currentProjectId !== currentProject.id.toString()) {
-            navigate(`/work?project=${currentProject.id}`, { replace: true });
-        }
-    }, [currentProject.id, location.search, navigate]);
-
-    const handleSlideChange = useCallback((swiper) => {
-        setIsLoading(true);
-        const currentIndex = swiper.activeIndex;
-        const newProject = PROJECTS_DATA[currentIndex];
-        setCurrentProject(newProject);
-
-        // Update URL with new project ID
-        navigate(`/work?project=${newProject.id}`, { replace: true });
-
-        // Use requestAnimationFrame for better performance
-        requestAnimationFrame(() => {
-            setTimeout(() => setIsLoading(false), 50);
-        });
-    }, [navigate]);
-
-    const goToPrevSlide = useCallback(() => {
-        swiperRef?.slidePrev();
-    }, [swiperRef]);
-
-    const goToNextSlide = useCallback(() => {
-        swiperRef?.slideNext();
-    }, [swiperRef]);
-
-    const goToSlide = useCallback((index) => {
-        swiperRef?.slideTo(index);
-    }, [swiperRef]);
-
-    const currentIndex = useMemo(() =>
-        PROJECTS_DATA.findIndex(p => p.id === currentProject.id), [currentProject.id]
-    );
-
-    // Memoized main motion props
-    const mainMotionProps = useMemo(() => ({
-        initial: { opacity: 0 },
-        animate: { opacity: 1 },
-        transition: { duration: prefersReducedMotion ? 0.2 : 0.8, ease: "easeOut" }
-    }), [prefersReducedMotion]);
-
-    // Memoized header motion props
-    const headerMotionProps = useMemo(() => ({
-        initial: { opacity: 0, y: prefersReducedMotion ? 0 : -30 },
-        animate: { opacity: 1, y: 0 },
-        transition: { duration: prefersReducedMotion ? 0.2 : 0.6, delay: prefersReducedMotion ? 0 : 0.2 }
-    }), [prefersReducedMotion]);
-
-    // Memoized slider motion props
-    const sliderMotionProps = useMemo(() => ({
-        initial: { opacity: 0, scale: prefersReducedMotion ? 1 : 0.95 },
-        animate: { opacity: 1, scale: 1 },
-        transition: { duration: prefersReducedMotion ? 0.2 : 0.8, delay: prefersReducedMotion ? 0 : 0.4 }
-    }), [prefersReducedMotion]);
-
     return (
         <div className="min-h-screen overflow-hidden">
             <Suspense fallback={<BackgroundFallback />}>
                 <BackgroundEffects />
             </Suspense>
 
-            <motion.main
-                {...mainMotionProps}
-                className="relative z-10"
-            >
+            <motion.main {...motionProps.main} className="relative z-10">
                 {/* Header Section */}
                 <header className="text-center pt-8 sm:pt-12 md:pt-16 lg:pt-20 pb-6 sm:pb-8 md:pb-12 px-4">
-                    <motion.div {...headerMotionProps}>
+                    <motion.div {...motionProps.header}>
                         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white mb-3 sm:mb-4 md:mb-6 leading-tight">
                             My{" "}
                             <span className={`text-transparent bg-clip-text bg-gradient-to-r ${currentProject.color} transition-all duration-500`}>
@@ -244,10 +285,7 @@ const WorkPage = () => {
                         <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6 sm:gap-8 md:gap-10 lg:gap-12 xl:gap-16">
 
                             {/* Project Slider */}
-                            <motion.div
-                                {...sliderMotionProps}
-                                className="order-1 lg:order-2 relative"
-                            >
+                            <motion.div {...motionProps.slider} className="order-1 lg:order-2 relative">
                                 <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl shadow-2xl shadow-blue-500/10 border border-white/10">
 
                                     {/* Loading Overlay */}
@@ -267,7 +305,6 @@ const WorkPage = () => {
                                     <Swiper
                                         onSwiper={(swiper) => {
                                             setSwiperRef(swiper);
-                                            // Set initial slide based on URL parameter
                                             const projectIndex = PROJECTS_DATA.findIndex(p => p.id === initialProject.id);
                                             if (projectIndex !== -1) {
                                                 setTimeout(() => swiper.slideTo(projectIndex, 0), 100);
@@ -278,73 +315,20 @@ const WorkPage = () => {
                                         modules={[Navigation, Pagination, EffectFade]}
                                         effect="fade"
                                         fadeEffect={{ crossFade: true }}
-                                        lazy={{
-                                            loadPrevNext: true,
-                                            loadPrevNextAmount: 1,
-                                            loadOnTransitionStart: true
-                                        }}
+                                        lazy={{ loadPrevNext: true, loadPrevNextAmount: 1 }}
                                         onSlideChange={handleSlideChange}
                                         className="aspect-[4/3] sm:aspect-[3/2] md:aspect-[4/3] lg:aspect-[4/3] xl:aspect-[3/2]"
                                         grabCursor
-                                        touchRatio={1.2}
-                                        threshold={15}
                                         speed={400}
-                                        resistance={true}
-                                        resistanceRatio={0.85}
-                                        watchSlidesProgress={true}
+                                        watchSlidesProgress
                                         preloadImages={false}
                                     >
                                         {PROJECTS_DATA.map((project) => (
                                             <SwiperSlide key={project.id}>
-                                                <motion.div
-                                                    className="relative w-full h-full group cursor-pointer"
-                                                    whileHover={{
-                                                        scale: prefersReducedMotion ? 1 : 1.02
-                                                    }}
-                                                    transition={{ duration: 0.4 }}
-                                                >
-                                                    {/* Overlay */}
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent z-10 
-                                        opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                                                    {/* Featured Badge */}
-                                                    {project.featured && (
-                                                        <motion.div
-                                                            initial={{ scale: 0 }}
-                                                            animate={{ scale: 1 }}
-                                                            className="absolute top-3 sm:top-4 md:top-6 left-3 sm:left-4 md:left-6 z-20 flex items-center gap-1 md:gap-2 
-                                       px-2 py-1 md:px-3 md:py-1.5 bg-gradient-to-r from-yellow-400/90 to-orange-500/90 
-                                       text-white text-xs md:text-sm font-semibold rounded-full backdrop-blur-sm border border-white/20"
-                                                        >
-                                                            <BsStar className="text-xs" />
-                                                            <span className="hidden xs:inline">Featured</span>
-                                                        </motion.div>
-                                                    )}
-
-                                                    {/* Project Image */}
-                                                    <Suspense fallback={
-                                                        <div className="w-full h-full bg-slate-800 flex items-center justify-center">
-                                                            <LoadingSpinner />
-                                                        </div>
-                                                    }>
-                                                        <OptimizedImage
-                                                            src={project.image}
-                                                            alt={project.title}
-                                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                                            loading="lazy"
-                                                        />
-                                                    </Suspense>
-
-                                                    {/* Hover Content */}
-                                                    <div className="absolute bottom-3 sm:bottom-4 md:bottom-6 left-3 sm:left-4 md:left-6 right-3 sm:right-4 md:right-6 z-20 
-                                        opacity-0 group-hover:opacity-100 transition-all duration-500 
-                                        translate-y-4 group-hover:translate-y-0">
-                                                        <h3 className="text-white font-bold text-base sm:text-lg md:text-xl mb-1 md:mb-2">{project.title}</h3>
-                                                        <p className="text-slate-200 text-xs sm:text-sm line-clamp-2 leading-relaxed">
-                                                            {project.description}
-                                                        </p>
-                                                    </div>
-                                                </motion.div>
+                                                <ProjectSlide
+                                                    project={project}
+                                                    prefersReducedMotion={prefersReducedMotion}
+                                                />
                                             </SwiperSlide>
                                         ))}
                                     </Swiper>
@@ -359,30 +343,18 @@ const WorkPage = () => {
                                     </Suspense>
 
                                     {/* Project Counter */}
-                                    <div className="absolute top-3 sm:top-4 md:top-6 right-3 sm:right-4 md:right-6 z-20 px-2 py-1 md:px-3 md:py-1.5 
-                                bg-black/50 backdrop-blur-md text-white text-xs md:text-sm rounded-full 
-                                border border-white/20 font-mono">
-                                        {currentProject.num} / {PROJECTS_DATA.length.toString().padStart(2, '0')}
+                                    <div className="absolute top-3 sm:top-4 md:top-6 right-3 sm:right-4 md:right-6 z-20 px-2 py-1 md:px-3 md:py-1.5 bg-black/50 backdrop-blur-md text-white text-xs md:text-sm rounded-full border border-white/20 font-mono">
+                                        {currentProject.num} / {TOTAL_PROJECTS.toString().padStart(2, '0')}
                                     </div>
                                 </div>
 
                                 {/* Pagination Dots */}
-                                <div className="flex justify-center gap-2 sm:gap-3 mt-4 sm:mt-6 md:mt-8">
-                                    {PROJECTS_DATA.map((_, index) => (
-                                        <motion.button
-                                            key={index}
-                                            onClick={() => goToSlide(index)}
-                                            whileHover={{ scale: prefersReducedMotion ? 1 : 1.2 }}
-                                            whileTap={{ scale: prefersReducedMotion ? 1 : 0.9 }}
-                                            className={`w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 rounded-full transition-all duration-300 
-                                 focus:outline-none focus:ring-2 focus:ring-blue-400/50 ${index === currentIndex
-                                                    ? `bg-gradient-to-r ${currentProject.color} shadow-lg shadow-blue-500/30`
-                                                    : 'bg-white/30 hover:bg-white/50'
-                                                }`}
-                                            aria-label={`Go to project ${index + 1}`}
-                                        />
-                                    ))}
-                                </div>
+                                <PaginationDots
+                                    currentIndex={currentIndex}
+                                    currentProject={currentProject}
+                                    onSlideClick={goToSlide}
+                                    prefersReducedMotion={prefersReducedMotion}
+                                />
                             </motion.div>
 
                             {/* Project Details */}
@@ -392,15 +364,13 @@ const WorkPage = () => {
                                 animate="visible"
                                 className="order-2 lg:order-1"
                             >
-                                <div className="bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10
-                              border border-white/10 shadow-2xl">
+                                <div className="bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10 border border-white/10 shadow-2xl">
 
                                     {/* Project Number */}
                                     <motion.div
                                         key={`number-${currentProject.id}`}
                                         variants={variants.item}
-                                        className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-transparent bg-clip-text 
-                               bg-gradient-to-r ${currentProject.color} mb-4 sm:mb-6 md:mb-8 transition-all duration-500`}
+                                        className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r ${currentProject.color} mb-4 sm:mb-6 md:mb-8 transition-all duration-500`}
                                     >
                                         {currentProject.num}
                                     </motion.div>
@@ -412,9 +382,7 @@ const WorkPage = () => {
                                         className="mb-4 sm:mb-6 md:mb-8"
                                     >
                                         <div className="flex items-center gap-2 mb-3 sm:mb-4">
-                                            <span className={`inline-flex items-center gap-1 md:gap-2 px-3 py-1.5 md:px-4 md:py-2
-                                       bg-gradient-to-r ${currentProject.color} bg-opacity-20 text-white 
-                                       text-xs sm:text-sm font-semibold rounded-full border border-white/30`}>
+                                            <span className={`inline-flex items-center gap-1 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-gradient-to-r ${currentProject.color} bg-opacity-20 text-white text-xs sm:text-sm font-semibold rounded-full border border-white/30`}>
                                                 {currentProject.featured && <BsStar className="text-yellow-400 text-xs md:text-sm" />}
                                                 {currentProject.category}
                                             </span>
