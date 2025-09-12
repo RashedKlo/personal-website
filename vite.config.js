@@ -4,9 +4,9 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(),tailwindcss()],
-  build:{
-     build: {
+  plugins: [react(), tailwindcss()],
+  base: '/personal-website/', // Add this for GitHub Pages
+  build: {
     rollupOptions: {
       output: {
         manualChunks: {
@@ -17,5 +17,4 @@ export default defineConfig({
       },
     },
   },
-  }
 })
