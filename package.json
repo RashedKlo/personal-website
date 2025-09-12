@@ -11,7 +11,7 @@
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
   },
-  "homepage": "https://rashedklo.github.io/personal-website",
+  "homepage": "https://rashedklo.github.io/personal-website/",
   "dependencies": {
     "@tailwindcss/vite": "^4.1.12",
     "framer-motion": "^12.23.12",
