@@ -1,0 +1,7 @@
+import{a as t,j as e,m as s}from"./framer-motion-CnF8PXfX.js";const i=t.memo(({item:r,index:n,fadeInUp:o})=>{const a=r.icon;return e.jsxs(s.a,{href:r.href,variants:o,whileHover:{y:-5,scale:1.02},whileTap:{scale:.98},className:`group relative p-8 bg-gradient-to-br from-white/5 to-white/0 backdrop-blur-xl \r
+                      border border-white/10 rounded-3xl hover:border-cyan-400/50 transition-all duration-500\r
+                      hover:shadow-2xl hover:shadow-cyan-500/10 overflow-hidden`,children:[e.jsx("div",{className:`absolute  bg-gradient-to-br from-cyan-500/0 via-purple-500/0 to-pink-500/0 \r
+                           group-hover:from-cyan-500/10 group-hover:via-purple-500/5 group-hover:to-pink-500/10 \r
+                           transition-all duration-700 rounded-3xl`}),e.jsxs("div",{className:"relative z-10 flex items-center space-x-6",children:[e.jsx("div",{className:`flex-shrink-0 w-16 h-16 bg-gradient-to-br from-cyan-400 to-purple-500 \r
+                               rounded-2xl flex items-center justify-center group-hover:scale-110 \r
+                               transition-transform duration-300 shadow-lg`,children:e.jsx(a,{className:"text-white text-xl"})}),e.jsxs("div",{className:"flex-1",children:[e.jsx("p",{className:"text-gray-400 text-sm font-medium mb-1",children:r.label}),e.jsx("p",{className:"text-white text-lg font-semibold group-hover:text-cyan-300 transition-colors duration-300",children:r.value})]})]})]})});export{i as default};

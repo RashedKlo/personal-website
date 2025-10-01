@@ -1,0 +1,1 @@
+import{a as e,j as m}from"./framer-motion-CnF8PXfX.js";const r=e.memo(({src:a,alt:o,className:s,...t})=>m.jsx("img",{src:a,alt:o,className:s,loading:"lazy",decoding:"async",...t}));export{r as default};
