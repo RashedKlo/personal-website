@@ -9,7 +9,7 @@ const ContactCard = memo(({ item, index, fadeInUp }) => {
             variants={fadeInUp}
             whileHover={{ y: -5, scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="group relative p-8 bg-gradient-to-br from-white/5 to-white/0 backdrop-blur-xl 
+            className="group relative  bg-gradient-to-br from-white/5 to-white/0 backdrop-blur-xl 
                       border border-white/10 rounded-3xl hover:border-cyan-400/50 transition-all duration-500
                       hover:shadow-2xl hover:shadow-cyan-500/10 overflow-hidden"
         >
